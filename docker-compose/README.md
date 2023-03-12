@@ -4,6 +4,8 @@ This sample is taken from the docker awesome compose repository.
 Make sure to check it out! https://github.com/docker/awesome-compose/tree/master/nginx-nodejs-redis
 
 
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/mFNyQtGIou0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
 ## Node.js application with Nginx proxy and Redis database
 
 Project structure:
