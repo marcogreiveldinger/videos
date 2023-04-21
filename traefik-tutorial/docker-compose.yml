@@ -28,6 +28,7 @@ services:
       - "traefik.http.middlewares.traefik-auth.basicauth.users=user:$$2y$$05$$6m8MvyzgJ4Kl7/3rL4X6VurX1huMas8a7oPB3xRfBjFbGCR8MUi7W"
 
 
+  # This Plausible is free for self-hosted plausible.io
   plausible:
     image: plausible/analytics:latest
     restart: always
