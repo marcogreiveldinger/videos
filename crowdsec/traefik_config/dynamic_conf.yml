@@ -1,0 +1,56 @@
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      cipherSuites:
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_AES_128_GCM_SHA256
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256        
+      curvePreferences:
+        - CurveP521
+        - CurveP384
+      sniStrict: true
+   
+http:
+  middlewares:
+    traefik-auth:
+      basicAuth:
+        users:
+          - "user:$$2y$$05$$6m8MvyzgJ4Kl7/3rL4X6VurX1huMas8a7oPB3xRfBjFbGCR8MUi7W" #htpasswd -nb user 'demo'    
+    
+    default:
+      chain:
+        middlewares:
+          - default-security-headers
+          - gzip
+    
+    secHeaders:
+      chain:
+        middlewares:
+          - default-security-headers
+          - gzip
+    
+    crowdsec-bouncer:
+      forwardauth:
+        address: http://crowdsec-bouncer-traefik:8080/api/v1/forwardAuth
+        trustForwardHeader: true
+    
+    default-security-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        sslRedirect: true
+        #HSTS Configuration
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+    gzip:
+      compress: {}

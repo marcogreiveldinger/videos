@@ -1,0 +1,96 @@
+version: "3.3"
+services:
+  traefik:
+    image: "traefik:latest"
+    container_name: "traefik"
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./${TRAEFIK_FOLDER}/letsencrypt:/letsencrypt
+      - ./${TRAEFIK_FOLDER}/traefik.yml:/traefik.yml:ro
+      - ./${TRAEFIK_FOLDER}/dynamic_conf.yml:/dynamic_conf.yml:ro
+      - /var/log/crowdsec/traefik/:/var/log/traefik/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"      
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.middlewares=traefik-auth@file,default@file"
+      - "traefik.http.services.traefik.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.traefik.loadbalancer.sticky.cookie.secure=true"
+
+  crowdsec:
+    container_name: crowdsec
+    image: crowdsecurity/crowdsec:latest
+    environment:
+      GID: "${GID-1000}"
+      COLLECTIONS: "crowdsecurity/linux crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/whitelist-good-actors crowdsecurity/sshd"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./${CROWDSEC_FOLDER}:/etc/crowdsec
+      - ./${CROWDSEC_FOLDER}/data:/var/lib/crowdsec/data
+      - /var/log/auth.log:/var/log/auth.log:ro
+      - /var/log/crowdsec:/var/log/crowdsec:ro
+      - crowdsec-db:/var/lib/crowdsec/data/
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges=true
+    hostname: crowdsec
+
+  whoami:
+    # A container that exposes an API to show its IP address
+    image: traefik/whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"      
+      - "traefik.http.routers.whoami.tls=true"
+      - "traefik.http.routers.whoami.middlewares=default@file"
+
+#######
+  bouncer-traefik:
+    container_name: crowdsec-bouncer-traefik
+    image: fbonalair/traefik-crowdsec-bouncer:latest
+    environment:
+      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_API_KEY} # the api key needs to be created of the crowdsec container with `docker compose exec -t crowdsec cscli bouncers add bouncer-traefik`
+      CROWDSEC_AGENT_HOST: crowdsec:8080  
+    restart: unless-stopped
+    depends_on:
+      - crowdsec
+    hostname: crowdsec-bouncer-traefik
+
+volumes:
+  crowdsec-db:
+
+  # Optional metabase dashboard: Reference: https://github.com/crowdsecurity/example-docker-compose
+  #metabase, because security is cool, but dashboards are cooler
+  # dashboard:
+  #   #we're using a custom Dockerfile so that metabase pops with pre-configured dashboards
+  #   build: ./crowdsec_config/dashboard
+  #   restart: always
+  #   expose:
+  #     - 3000
+  #   environment:
+  #     MB_DB_FILE: /data/metabase.db
+  #     MGID: "${GID-1000}"
+  #   depends_on:
+  #     - 'crowdsec'
+  #   volumes:
+  #     - crowdsec-db:/metabase-data/
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.dashboard.rule=Host(`crowdsec.dashboard.${DOMAIN}`)"
+  #     - "traefik.http.routers.dashboard.entrypoints=websecure"
+  #     - "traefik.http.routers.dashboard.tls.certresolver=myresolver"      
+  #     - "traefik.http.routers.dashboard.tls=true"
+  #     - "traefik.http.routers.dashboard.middlewares=traefik-auth@file,default@file"
+  #     - "traefik.http.services.dashboard.loadbalancer.server.port=3000"

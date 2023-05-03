@@ -1,0 +1,34 @@
+api:
+  dashboard: true
+
+certificatesResolvers:
+  myresolver:
+    acme:
+      email: your-email@example.com #### hier eure E-Mail angeben ####
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+    http:
+      middlewares:
+        - crowdsec-bouncer@file
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+  file:
+    filename: "./dynamic_conf.yml"
+    watch: true
+
+log:
+  level: "INFO"
+  filePath: "/var/log/traefik/traefik.log"
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  bufferingSize: 100
