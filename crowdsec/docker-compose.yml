@@ -35,8 +35,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./${CROWDSEC_FOLDER}:/etc/crowdsec
-      - ./${CROWDSEC_FOLDER}/data:/var/lib/crowdsec/data
+      - ./${CROWDSEC_FOLDER}/acquis.yaml:/etc/crowdsec/acquis.yaml
       - /var/log/auth.log:/var/log/auth.log:ro
       - /var/log/crowdsec:/var/log/crowdsec:ro
       - crowdsec-db:/var/lib/crowdsec/data/

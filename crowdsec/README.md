@@ -65,10 +65,10 @@ The CrowdSec container needs to be able to read the log files of traefik. Theref
         volumes:
         - /etc/localtime:/etc/localtime:ro
         - /var/run/docker.sock:/var/run/docker.sock:ro
-        - ./crowdsec_config:/etc/crowdsec
-        - ./data:/var/lib/crowdsec/data
+        - ./${CROWDSEC_FOLDER}/acquis.yaml:/etc/crowdsec/acquis.yaml
         - /var/log/auth.log:/var/log/auth.log:ro
         - /var/log/crowdsec:/var/log/crowdsec:ro
+        - crowdsec-db:/var/lib/crowdsec/data/
         restart: unless-stopped
         security_opt:
         - no-new-privileges=true
