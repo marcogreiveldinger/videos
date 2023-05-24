@@ -1,1 +1,2 @@
 .DS_Store
+crowdsec/traefik_config/letsencrypt/
