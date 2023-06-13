@@ -2,7 +2,7 @@
 
 Hi, there! 👋
 
-I am Marco a software developer and a tech enthusiast from germany. 
+I am Marco a software developer and a tech enthusiast from Germany. 
 
 This is a repository about my youtube videos to document code-snippets and other stuff mentioned in my youtube videos.
 

@@ -1,0 +1,99 @@
+version: "3.3"
+services:
+
+####### AUTHELIA #######
+  authelia:
+    image: authelia/authelia
+    container_name: authelia
+    volumes:
+      - ./config:/config
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)'
+      - 'traefik.http.routers.authelia.entrypoints=websecure'
+      - 'traefik.http.routers.authelia.tls=true'
+      - 'traefik.http.routers.authelia.tls.certresolver=myresolver'
+      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}'
+      - 'traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true'
+      - 'traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email'
+    expose:
+      - 9091
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Berlin
+
+
+####### TRAEFIK #######
+
+  traefik:
+    image: "traefik:latest"
+    container_name: "traefik"
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=hideme.6yhqq@aleeas.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"      
+      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=user:$$2y$$05$$6m8MvyzgJ4Kl7/3rL4X6VurX1huMas8a7oPB3xRfBjFbGCR8MUi7W"
+
+
+####### WHOAMI UNSECURE #######
+
+  whoami_unsecure:
+    # A container that exposes an API to show its IP address
+    image: traefik/whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`unsecure.whoami.${DOMAIN}`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"      
+      - "traefik.http.routers.whoami.tls=true"
+      - 'traefik.http.routers.whoami.middlewares=authelia@docker'
+      
+
+####### WHOAMI SECURE!!!! #######
+
+  whoami_secure:
+    # A container that exposes an API to show its IP address
+    image: traefik/whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoamis.rule=Host(`secure.whoami.${DOMAIN}`)"
+      - "traefik.http.routers.whoamis.entrypoints=websecure"
+      - "traefik.http.routers.whoamis.tls.certresolver=myresolver"      
+      - "traefik.http.routers.whoamis.tls=true"
+      - 'traefik.http.routers.whoamis.middlewares=authelia@docker'
+
+
+####### PORTAINER #######
+  portainer:
+    image: portainer/portainer-ce:latest
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to persist settings, add the data volume mapping below
+      # - data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`portainer.${DOMAIN}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.services.frontend.loadbalancer.server.port=9000"
+      - "traefik.http.routers.frontend.service=frontend"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"

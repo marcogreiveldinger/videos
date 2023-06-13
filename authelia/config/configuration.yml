@@ -1,0 +1,95 @@
+---
+###############################################################
+#                   Authelia configuration                    #
+###############################################################
+
+# This secret can also be set using the env variables AUTHELIA_JWT_SECRET_FILE
+# generate with 'docker run authelia/authelia:latest authelia crypto rand --length 128 --charset alphanumeric'
+jwt_secret: Lg1uxEMn46H1PXMln7x5rcDIpkraD67NGm0UQUePqG7NTcG3lJzo5Nbqf0oC9c4jlFQFirmHzvhezIPVTbpxJWCv13LGvxfXeeIn6oABddOhkbB9Q63pvfqlHp2CcCoz
+default_redirection_url: https://auth.example.com    ### add your domain of autehlia here
+
+log:
+  level: debug
+
+totp:
+  issuer: auth.example.com ### your plain domain
+
+# duo_api:
+#  hostname: api-123456789.example.com
+#  integration_key: ABCDEF
+#  # This secret can also be set using the env variables AUTHELIA_DUO_API_SECRET_KEY_FILE
+#  secret_key: 1234567890abcdefghifjkl
+
+authentication_backend:
+  file:
+    path: /config/users_database.yml
+
+access_control:
+  default_policy: deny
+  rules:
+    # Rules applied to everyone
+    - domain: unsecure.whoami.example.com
+      policy: bypass
+    - domain: secure.whoami.example.com
+      policy: one_factor
+    - domain: "*.example.com"
+      policy: two_factor
+
+session:
+  name: authelia_session
+  domain: example.com
+  secret: yY3lHcpq4zx4tsSwUSeMC9BrL5YbkdwxhDGOxPsHEJFj7CWdDsaMLQEIB6WH0iiB
+  expiration: 1h
+  inactivity: 5m
+  remember_me_duration:  1M
+
+regulation:
+  max_retries: 3
+  find_time: 120
+  ban_time: 300
+
+storage:
+# generate with 'docker run authelia/authelia:latest authelia crypto rand --length 128 --charset alphanumeric'
+  encryption_key: SoUtP3LE1fkWo3xbjsBga4Oar9DdyBhdBhqgpV1u1qetziXedzpIncHefHWAaeX0xo4q9zjmJoFN9h9K4CPkfCFusS6PQg5eXzmadhM2eH4lIHA83A8Ju1HIV4mdjgEe
+  local:
+    path: /config/db.sqlite3
+
+notifier:
+  smtp:
+    username: your_username
+    # This secret can also be set using the env variables AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE
+    password: your_password_for_the_email
+    host: your.smtp.provider
+    port: 465
+    sender: test@example.com
+  # For testing purpose, notifications can be sent in a file. 
+  # filesystem:
+  #   filename: /config/notification.txt
+
+identity_providers:
+  oidc:
+    ## The other portions of the mandatory OpenID Connect 1.0 configuration go here.
+    ## See: https://www.authelia.com/c/oidc
+    ##### generate with 'docker run authelia/authelia:latest authelia crypto rand --length 128 --charset alphanumeric'
+    hmac_secret: czdfKgpttNPxpCbKa7jWdjaMyxV4eiNmje0w0bktXIoxXG427atUObHN5SIo77U5qLicjoCTWdhzCHJB4o4GU0NcK6XzVfNWnKOx4L9NsSeUbjsj06f0ug0BdVUW6a5i 
+    
+    issuer_private_key: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIJKgIBAAKCAgEA5Yrc3/AYfM0bT5uH9XngyW9z5g+cHN1Q5vp5Yq1KGKDI06CT
+      ......
+      -----END RSA PRIVATE KEY-----
+    clients:
+    - id: portainer
+      description: Portainer
+      # generate with 'docker run authelia/authelia:latest authelia crypto hash generate pbkdf2 --variant sha512 --random --random.length 72 --random.charset rfc3986'
+      secret: '$pbkdf2-sha512$310000$gpA2QOY9wumGov5wo0SXoA$Z9NAf5tJxTshTtbV6ksq/1OJNyV8HIlU2M0ISrf166jrSBFLcehBv2o1OwYtqs7Ut76X9uFtBYb6YEuJP3Ml6A'  # The digest of '_KCF3WfJfdTgMXTBpO8qvkB1hMzLDx_C4xB94WYVtX~WADtMLtUOC5AfyW5JAD15L~ITi332'.
+      public: false
+      authorization_policy: two_factor
+      redirect_uris:
+        - https://portainer.example.com
+      scopes:
+        - openid
+        - profile
+        - groups
+        - email
+      userinfo_signing_algorithm: none
