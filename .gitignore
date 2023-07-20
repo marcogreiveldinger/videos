@@ -1,2 +1,7 @@
 .DS_Store
-crowdsec/traefik_config/letsencrypt/
+crowdsec/traefik_config/letsencrypt
+.idea
+.vscode
+.history
+**/venv/
+**/*terraform*
