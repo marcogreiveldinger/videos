@@ -1,0 +1,49 @@
+version: "3"
+services:
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma:/app/data
+    labels:
+      - "docker-volume-backup.stop-during-backup=uptime-kuma-service"
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/tmp/dumps
+    labels:
+      - "docker-volume-backup.archive-pre=/bin/sh -c 'mongodump --archive > /tmp/dumps/mongodb.archive'"
+      - "docker-volume-backup.exec-label=mongo"
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+
+  backup:
+    image: offen/docker-volume-backup:v2
+    container_name: backup
+    restart: always
+    env_file:
+      - ./backup.env
+    volumes:
+      - ./backup-configuration:/etc/dockervolumebackup/conf.d
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - mongo-data:/backup/mongo-data-backup:ro
+      - uptime-kuma:/backup/uptime-kuma-backup:ro
+
+
+volumes:
+  uptime-kuma:
+    driver: local
+  mongo-data:
+    driver: local
