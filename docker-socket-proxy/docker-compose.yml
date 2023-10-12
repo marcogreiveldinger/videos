@@ -1,0 +1,35 @@
+version: "3.3"
+
+services:
+
+  docket-socket-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: docket-socket-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "2375:2375"
+    environment:
+      - CONTAINERS=1
+
+  traefik:
+    image: "traefik:v2.10"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--providers.docker.endpoint=tcp://docket-socket-proxy:2375"
+    ports:
+      - "80:80"
+      - "8080:8080"
+
+  whoami:
+    image: "traefik/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
