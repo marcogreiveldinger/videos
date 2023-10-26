@@ -2,15 +2,18 @@ version: "3.3"
 
 services:
 
-  docket-socket-proxy:
+  docker-socket-proxy:
     image: tecnativa/docker-socket-proxy
-    container_name: docket-socket-proxy
+    container_name: docker-socket-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "2375:2375"
     environment:
       - CONTAINERS=1
+    networks:
+      - socket-proxy
+#   can be exposed to make clear that the port is used, works also without the expose as traefik and the proxy are in the same network
+#    expose:
+#      - 2375
 
   traefik:
     image: "traefik:v2.10"
@@ -21,10 +24,13 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      - "--providers.docker.endpoint=tcp://docket-socket-proxy:2375"
+      - "--providers.docker.endpoint=tcp://docker-socket-proxy:2375"
     ports:
       - "80:80"
       - "8080:8080"
+    networks:
+      - traefik
+      - socket-proxy
 
   whoami:
     image: "traefik/whoami"
@@ -33,3 +39,9 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
       - "traefik.http.routers.whoami.entrypoints=web"
+    networks:
+      - traefik
+
+networks:
+  socket-proxy:
+  traefik:
