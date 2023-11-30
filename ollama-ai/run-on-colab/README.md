@@ -6,6 +6,8 @@ This sample is based on the [ollama documentation](https://github.com/jmorganca/
 
 [Google Colab](https://colab.google)
 
+[Jupyter notebook](./ollama-ai-colab.ipynb)
+
 ## Ollama.ai & Google Colab
 
 This directory contains a jupyter notebook that installs ollama.ai on google colab and runs a model.
