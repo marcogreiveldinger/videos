@@ -1,0 +1,21 @@
+version: "3"
+services:
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma:/app/data
+
+
+# this section has to be changed after the restore to use an external docker volume
+volumes:
+  uptime-kuma:
+    driver: local
+
+###
+# volumes:
+#   uptime-kuma:
+#     external: true
