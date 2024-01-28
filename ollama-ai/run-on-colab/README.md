@@ -14,6 +14,8 @@ This directory contains a jupyter notebook that installs ollama.ai on google col
 It helps you to run large language models on google colab without the need to have a powerful machine at your home.
 Make sure that you have a T4 instance selected in the google colab settings so you can make use of the GPU.
 
+Create an account at https://ngrok.com/ and create an authtoken for your jupyter-notebook. Place it in the line where the autthoken is added to the ngrok conf.
+
 Project structure:
 ```
 .
